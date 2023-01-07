@@ -11,6 +11,8 @@ import pandas as pd
 
 path = "./chromedriver"
 
-df = gs.get_jobs('java', 15, False, path, 10)
+df = gs.get_jobs('Data Entry', 100, False, path, 5)
 
-print(df)
+df.to_csv("glassdor_jobs2.csv",',')
+
+
