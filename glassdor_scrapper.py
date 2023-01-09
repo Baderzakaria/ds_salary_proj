@@ -26,13 +26,12 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
     driver = webdriver.Chrome(executable_path=path, options=options)
     driver.set_window_size(1120, 1000)
     keyword = keyword.replace(' ', '-')
-    url = 'https://www.glassdoor.com/Job/' + keyword + '-jobs-SRCH_KO0,10.htm?seniorityType=entrylevel&applicationType=1&remoteWorkType=1'
-    # url = 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword="' + keyword + '"&locT=C&locId=1147401&locKeyword=UAE,%20CA&jobType=all&fromAge=-1&minSalary=0&includeNoSalaryJobs=true&radius=100&cityId=-1&minRating=0.0&industryId=-1&sgocId=-1&seniorityType=all&companyId=-1&employerSizes=0&applicationType=0&remoteWorkType=0'
+    url = "https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&suggestChosen=false&clickSource=searchBtn&typedKeyword="+keyword+"&sc.keyword="+keyword+"&locT=&locId=&jobType="    # url = 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword="' + keyword + '"&locT=C&locId=1147401&locKeyword=UAE,%20CA&jobType=all&fromAge=-1&minSalary=0&includeNoSalaryJobs=true&radius=100&cityId=-1&minRating=0.0&industryId=-1&sgocId=-1&seniorityType=all&companyId=-1&employerSizes=0&applicationType=0&remoteWorkType=0'
     driver.get(url)
     jobs = []
 
-    while len(jobs) <= num_jobs:  # If true, should be still looking for new jobs.
-
+    while len(jobs) < num_jobs :  # If true, should be still looking for new jobs.
+        print(num_jobs)
         # Let the page load. Change this number based on your internet speed.
         # Or, wait until the webpage is loaded, instead of hardcoding it.
         time.sleep(sleep_time)
@@ -45,10 +44,6 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
         except ElementClickInterceptedException:
             print("x this is not working 0")
 
-        print("waiting")
-        time.sleep(1)
-        print("stop")
-
         try:
             driver.find_element(By.CSS_SELECTOR, '[alt="Close"]').click()  # clicking to the X.
             print("not error")
@@ -60,16 +55,15 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
         # Going through each job in this page
         job_buttons = driver.find_elements(By.CLASS_NAME,
                                            "react-job-listing")  # jl for Job Listing. These are the buttons we're going to click.
+
         for job_button in job_buttons:
 
             print("Progress: {}".format("" + str(len(jobs)) + "/" + str(num_jobs)))
             if len(jobs) >= num_jobs:
                 break
-
             job_button.click()  # You might
-
             # print(job_button.text)
-            time.sleep(3)
+            time.sleep(.1)
             collected_successfully = False
 
             while not collected_successfully:
@@ -96,9 +90,7 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
                 salary_estimate = driver.find_element(By.XPATH, '//div[@class="css-1bluz6i e2u4hf13"]').text
                 print(salary_estimate)
             except NoSuchElementException:
-
                 salary_estimate = -1  # You need to set a "not found value. It's important."
-                print("______3")
                 pass
 
             try:
@@ -228,15 +220,15 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
                          "Industry": industry,
                          "Sector": sector,
                          "Revenue": revenue,
-                         "link": competitors})
+                         "link": url_web})
             # #add job to jobs
 
         # Clicking on the "next page" button
         try:
-            driver.find_element(By.XPATH, '//*[@id="MainCol"]/div[2]/div/div[1]/button[7]/span/svg/path').click()
+            driver.find_element(By.XPATH, '//*[@id="MainCol"]/div[2]/div/div[1]/button[7]').click()
         except NoSuchElementException:
             print("Scraping terminated before reaching target number of jobs. Needed {}, got {}.".format(num_jobs,
                                                                                                          len(jobs)))
-            break
+            pass
 
     return pd.DataFrame(jobs)
