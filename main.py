@@ -7,6 +7,8 @@ Created on Wed Jan  4 19:25:32 2023
 """
 
 import glassdor_scrapper as gs
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 
 path = "./chromedriver"
