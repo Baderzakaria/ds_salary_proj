@@ -1,96 +1,64 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Jan  7 12:24:04 2023
+Created on Sat Apr  4 17:27:06 2020
 
-@author: baderzakaria
+@author: Ken
 """
 
 import pandas as pd
 
-df=pd.read_csv("glassdor_jobs.csv")
+df = pd.read_csv('glassdor_jobs.csv')
 
-#>>>>>>>>salary parsing
+# salary parsing
 
+df['hourly'] = df['Salary Estimate'].apply(lambda x: 1 if 'per hour' in x.lower() else 0)
+df['employer_provided'] = df['Salary Estimate'].apply(lambda x: 1 if 'employer provided salary:' in x.lower() else 0)
 
-#remove empties
+df = df[df['Salary Estimate'] != '-1']
+salary = df['Salary Estimate'].apply(lambda x: x.split('(')[0])
+minus_Kd = salary.apply(lambda x: x.replace('K', '').replace('$', ''))
 
-#hourly from per year
+min_hr = minus_Kd.apply(lambda x: x.lower().replace('per hour', '').replace('employer provided salary:', ''))
 
-df['hourly'] = df['Salary Estimate'].apply(lambda x : 1 if 'per hour' in x.lower() else 0)
+df['min_salary'] = min_hr.apply(lambda x: int(x.split('-')[0]))
+df['max_salary'] = min_hr.apply(lambda x: int(x.split('-')[1]))
+df['avg_salary'] = (df.min_salary + df.max_salary) / 2
 
-#remove employer provided from salary
- 
-df['employer _provided'] = df['Salary Estimate'].apply(lambda x : 1  if 'employer provided salary:' in x.lower() else 0)
+# Company name text only
+df['company_txt'] = df.apply(lambda x: x['Company Name'] if x['Rating'] < 0 else x['Company Name'][:-3], axis=1)
 
-
-df=df[df['Salary Estimate']!='-1']
-
-#split before ()
-salary = df['Salary Estimate'].apply(lambda x : x.split('(')[0] )
-
-#remove the K $ and per hour and employer...
-
-minus_kd = salary.apply(lambda x: x.replace('K','').replace('$',''))
-
-
-minus_hr = minus_kd.apply(lambda x: x.lower().replace('per hour','').replace('employer provided salary:',''))
-
-#get the min hour after removing the splitter 
-
-df['min_salary'] = minus_hr.apply(lambda x: int(x.split('-')[0]))
-
-#setting the data type of this new column to d type integer
-df['min_salary'].dtype
-
-df['max_salary'] = minus_hr.apply(lambda x: int(x.split('-')[1]))
-df['max_salary'].dtype
-#calculating the average
-
-df['avg_sal']= (df['min_salary']+df['max_salary'])/2
-
-
-#compnay name text only
-# we will apply this when u had to use in lambda another column since it cant be linked to x
-df['company_txt']=df.apply(lambda x: x['Company Name'] if x['Rating'] <= 0 else x['Company Name'][:-3],axis =1)
-
-#state field 
-
-df['job_state']= df.apply(lambda x: x['Location'].split(',')[0],axis= 1)
-
+# state field
+df['job_state'] = df['Location'].apply(lambda x: x.split(',')[1])
 df.job_state.value_counts()
 
-#if the job location is in the same headquarter
+df['same_state'] = df.apply(lambda x: 1 if x.Location == x.Headquarters else 0, axis=1)
 
-df['same_city']=df.apply(lambda x : 1 if x.Location== x.Headquarters else 0,axis = 1)
+# age of company
+df['age'] = df.Founded.apply(lambda x: x if x < 1 else 2020 - x)
 
-# age of the company 
+# parsing of job description (python, etc.)
 
-df['age'] = df.Founded.apply(lambda x: x if x<1 else 2022 - x )
+# python
+df['python_yn'] = df['Job Description'].apply(lambda x: 1 if 'python' in x.lower() else 0)
 
-#>>>>>parsing of job description 
+# r studio
+df['R_yn'] = df['Job Description'].apply(lambda x: 1 if 'r studio' in x.lower() or 'r-studio' in x.lower() else 0)
+df.R_yn.value_counts()
 
-#find python 
-
-df['python_yn']=df['Job Description'].apply(lambda x : 1 if 'python' in x.lower() else 0)
-df.python_yn.value_counts()
-
-df['rstudio_yn']=df['Job Description'].apply(lambda x : 1 if 'r studio' in x.lower() or 'r-studio' in x.lower() else 0)
-
-#spark
+# spark
 df['spark'] = df['Job Description'].apply(lambda x: 1 if 'spark' in x.lower() else 0)
 df.spark.value_counts()
 
-#aws
+# aws
 df['aws'] = df['Job Description'].apply(lambda x: 1 if 'aws' in x.lower() else 0)
 df.aws.value_counts()
 
-#excel
+# excel
 df['excel'] = df['Job Description'].apply(lambda x: 1 if 'excel' in x.lower() else 0)
 df.excel.value_counts()
 
 df.columns
 
-df_out = df.drop(['Unnamed: 0'], axis =1)
+df_out = df.drop(['Unnamed: 0'], axis=1)
 
-df_out.to_csv('salary_data_cleaned.csv',index = False)
+df_out.to_csv('salary_data_cleaned.csv', index=False)
